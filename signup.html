@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
+        authDomain: "docssystem-53344.firebaseapp.com",
+        projectId: "docssystem-53344",
+        storageBucket: "docssystem-53344.appspot.com",
+        messagingSenderId: "148150761173",
+        appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
+        measurementId: "G-NEYY09HB5P",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+    </script>
+  </head>
+  <body>
+    <h1>Create an Account</h1>
+    <form id="signupForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <select id="role" required>
+        <option value="user">User</option>
+        <option value="manager">Manager</option>
+      </select>
+      <button type="submit">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+
+    <script>
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const role = document.getElementById("role").value;
+
+          try {
+            const userCred = await auth.createUserWithEmailAndPassword(
+              email,
+              password
+            );
+            await db.collection("users").doc(userCred.user.uid).set({ role });
+            alert("Signup successful!");
+            window.location.href = "index.html";
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+    </script>
+  </body>
+</html>

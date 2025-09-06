@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Revision Files</title>
+    <title>Login</title>
     <link rel="stylesheet" href="style.css" />
 
     <!-- Firebase SDKs -->
@@ -21,41 +21,36 @@
         appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
         measurementId: "G-NEYY09HB5P",
       };
+
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
+      const storage = firebase.storage();
     </script>
   </head>
   <body>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="page1.html">Process 1</a>
-      <a href="page2.html">Process 2</a>
-      <a href="page3.html">Approved</a>
-      <a href="page4.html">Revisions</a>
-      <a href="#" onclick="auth.signOut()">Sign Out</a>
-    </nav>
-
-    <h1>Files for Revision</h1>
-    <div id="file-list"></div>
+    <h1>Login</h1>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+    <p>Don’t have an account? <a href="signup.html">Sign up</a></p>
 
     <script>
-      auth.onAuthStateChanged((user) => {
-        if (!user) return (window.location.href = "login.html");
-
-        db.collection("files")
-          .where("status", "==", "revise")
-          .onSnapshot((snapshot) => {
-            const container = document.getElementById("file-list");
-            container.innerHTML = "";
-            snapshot.forEach((docSnap) => {
-              const file = docSnap.data();
-              const div = document.createElement("div");
-              div.innerHTML = `<p>${file.name}</p><a href="${file.url}" target="_blank">View</a>`;
-              container.appendChild(div);
-            });
-          });
-      });
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          try {
+            await auth.signInWithEmailAndPassword(email, password);
+            window.location.href = "index.html";
+          } catch (err) {
+            alert(err.message);
+          }
+        });
     </script>
   </body>
 </html>
