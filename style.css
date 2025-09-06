@@ -10,13 +10,17 @@
 }
 
 /* Body with background */
-body {
-  background: url("/images/background.jpg") no-repeat center center fixed;
+/*body {
+  background: url("images/background.jpg") no-repeat center center fixed;
   background-size: cover;
   color: #fff;
   padding-top: 80px; /* space for nav */
   text-align: center;
+}*/
+body {
+  background: red;
 }
+
 
 /* Navbar - glassmorphism */
 nav {
