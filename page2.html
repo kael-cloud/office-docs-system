@@ -2,74 +2,71 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Process 2</title>
+    <title>Page 2 - Manager Only</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+      } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    <script>
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
         projectId: "docssystem-53344",
-        storageBucket: "docssystem-53344.appspot.com",
+        storageBucket: "docssystem-53344.firebasestorage.app",
         messagingSenderId: "148150761173",
         appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
         measurementId: "G-NEYY09HB5P",
       };
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Check user on page load
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists()) {
+          await signOut(auth);
+          window.location.href = "login.html";
+          return;
+        }
+
+        const data = userDoc.data();
+        if (data.role !== "manager" || data.status !== "approved") {
+          alert("You are not authorized to view this page.");
+          await signOut(auth);
+          window.location.href = "login.html";
+        }
+      });
     </script>
   </head>
   <body>
     <nav>
       <a href="index.html">Home</a>
-      <a href="page1.html">Process 1</a>
-      <a href="page2.html">Process 2</a>
-      <a href="page3.html">Approved</a>
-      <a href="page4.html">Revisions</a>
+      <a href="page1.html">Page 1</a>
+      <a href="page2.html">Page 2</a>
+      <a href="page3.html">Page 3</a>
+      <a href="page4.html">Page 4</a>
+      <a href="manage-users.html">Manage Users</a>
       <a href="#" onclick="auth.signOut()">Sign Out</a>
     </nav>
 
-    <h1>Process 2 – Manager Only</h1>
-    <div id="file-list"></div>
-
-    <script>
-      auth.onAuthStateChanged(async (user) => {
-        if (!user) return (window.location.href = "login.html");
-        const doc = await db.collection("users").doc(user.uid).get();
-        if (doc.data()?.role !== "manager") {
-          alert("Access denied. Managers only.");
-          return (window.location.href = "index.html");
-        }
-
-        db.collection("files")
-          .where("page", "==", "2")
-          .onSnapshot((snapshot) => {
-            const container = document.getElementById("file-list");
-            container.innerHTML = "";
-            snapshot.forEach((docSnap) => {
-              const file = docSnap.data();
-              const div = document.createElement("div");
-              div.innerHTML = `
-            <p>${file.name}</p>
-            <a href="${file.url}" target="_blank">View</a><br>
-            <button onclick="updateStatus('${docSnap.id}','approved')">Approve</button>
-            <button onclick="updateStatus('${docSnap.id}','revise')">Revise</button>
-          `;
-              container.appendChild(div);
-            });
-          });
-      });
-
-      function updateStatus(fileId, status) {
-        db.collection("files").doc(fileId).update({ status });
-      }
-    </script>
+    <h1>Page 2 - Only Approved Managers Can See This</h1>
+    <!-- Your existing page1 content below -->
   </body>
 </html>
