@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Manage Users</title>
+  </head>
+  <body>
+    <h2>Pending Manager Approvals</h2>
+    <ul id="pendingList"></ul>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        query,
+        where,
+        getDocs,
+        updateDoc,
+        doc,
+      } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
+        authDomain: "docssystem-53344.firebaseapp.com",
+        projectId: "docssystem-53344",
+        storageBucket: "docssystem-53344.firebasestorage.app",
+        messagingSenderId: "148150761173",
+        appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
+        measurementId: "G-NEYY09HB5P",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      async function loadPending() {
+        const q = query(
+          collection(db, "users"),
+          where("role", "==", "manager"),
+          where("status", "==", "pending")
+        );
+        const snap = await getDocs(q);
+
+        const list = document.getElementById("pendingList");
+        list.innerHTML = "";
+
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
+          const li = document.createElement("li");
+          li.textContent = `${data.email} - ${data.status}`;
+
+          const approveBtn = document.createElement("button");
+          approveBtn.textContent = "Approve";
+          approveBtn.onclick = async () => {
+            await updateDoc(doc(db, "users", docSnap.id), {
+              status: "approved",
+            });
+            loadPending();
+          };
+
+          const rejectBtn = document.createElement("button");
+          rejectBtn.textContent = "Reject";
+          rejectBtn.onclick = async () => {
+            await updateDoc(doc(db, "users", docSnap.id), {
+              status: "rejected",
+            });
+            loadPending();
+          };
+
+          li.appendChild(approveBtn);
+          li.appendChild(rejectBtn);
+          list.appendChild(li);
+        });
+      }
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          loadPending();
+        } else {
+          window.location.href = "login.html";
+        }
+      });
+    </script>
+  </body>
+</html>
