@@ -5,14 +5,24 @@
     <title>Page 1</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        query,
+        where,
+        onSnapshot,
+        doc,
+        getDoc,
+        updateDoc,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    <script>
-      // Firebase config
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
@@ -23,62 +33,27 @@
         measurementId: "G-NEYY09HB5P",
       };
 
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-      const storage = firebase.storage();
-
-      // Manager-only check
-      auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-          window.location.href = "login.html";
-          return;
-        }
-
-        const userDoc = await db.collection("users").doc(user.uid).get();
-        if (!userDoc.exists) {
-          await auth.signOut();
-          window.location.href = "login.html";
-          return;
-        }
-
-        const data = userDoc.data();
-        if (data.role !== "manager" || data.status !== "approved") {
-          alert("You are not authorized to view this page.");
-          await auth.signOut();
-          window.location.href = "login.html";
-        }
-      });
-    </script>
-  </head>
-  <body>
-    <!-- Navbar -->
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="page1.html">Page 1</a>
-      <a href="page2.html">Page 2</a>
-      <a href="page3.html">Page 3</a>
-      <a href="page4.html">Page 4</a>
-      <a href="manage-users.html">Manage Users</a>
-      <a href="#" onclick="auth.signOut()">Sign Out</a>
-    </nav>
-
-    <div class="glass-outer">
-      <h1>Page 1: Uploaded Files</h1>
-      <div id="file-list"></div>
-    </div>
-
-    <script>
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const container = document.getElementById("file-list");
       const pageNumber = "1";
 
-      // Display files
-      db.collection("files")
-        .where("page", "==", pageNumber)
-        .onSnapshot((snapshot) => {
-          const container = document.getElementById("file-list");
+      let role = "employee";
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) window.location.href = "login.html";
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        role = userDoc.data()?.role || "employee";
+
+        const q = query(
+          collection(db, "files"),
+          where("page", "==", pageNumber)
+        );
+        onSnapshot(q, (snapshot) => {
           container.innerHTML = "";
-          snapshot.docs.forEach((doc) => {
-            const file = doc.data();
+          snapshot.docs.forEach((docItem) => {
+            const file = docItem.data();
             let element = "";
             if (file.mimetype?.startsWith("image/")) {
               element = `<img src="${file.url}" alt="${file.name}">`;
@@ -87,19 +62,39 @@
             } else {
               element = `<a href="${file.url}" target="_blank">${file.name}</a>`;
             }
-            element += `<div style="margin-top:5px;">
-                <button onclick="updateStatus('${doc.id}','approved')">Approve</button>
-                <button onclick="updateStatus('${doc.id}','revise')">Revise</button>
-              </div>`;
+
+            if (role === "manager") {
+              element += `<div style="margin-top:5px;">
+                      <button onclick="updateStatus('${docItem.id}','approved')">Approve</button>
+                      <button onclick="updateStatus('${docItem.id}','revise')">Revise</button>
+                    </div>`;
+            }
+
             const div = document.createElement("div");
             div.innerHTML = element;
             container.appendChild(div);
           });
         });
+      });
 
-      function updateStatus(fileId, status) {
-        db.collection("files").doc(fileId).update({ status });
-      }
+      window.updateStatus = async (id, status) => {
+        await updateDoc(doc(db, "files", id), { status });
+      };
+
+      window.signOutUser = () => signOut(auth);
     </script>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="page1.html">Page 1</a>
+      <a href="page2.html">Page 2</a>
+      <a href="page3.html">Page 3</a>
+      <a href="page4.html">Page 4</a>
+      <a href="#" onclick="signOutUser()">Sign Out</a>
+    </nav>
+
+    <h1>Page 1: Uploaded Files</h1>
+    <div id="file-list"></div>
   </body>
 </html>

@@ -11,7 +11,7 @@
 
 /* Body with background */
 body {
-  background: url("images/background.jpg") no-repeat center center fixed;
+  background: url("/images/background.jpg") no-repeat center center fixed;
   background-size: cover;
   color: #fff;
   padding-top: 80px; /* space for nav */
@@ -120,7 +120,7 @@ form button:hover {
   padding: 10px;
 }
 
-/* File previews - ONLY uploaded files get glass effect */
+/* File previews - glass effect */
 #file-list img,
 #file-list embed,
 #file-list a {

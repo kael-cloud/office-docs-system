@@ -3,40 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <title>Sign Up</title>
-  </head>
-  <body>
-    <h2>Sign Up</h2>
-    <form id="signupForm">
-      <input type="email" id="email" placeholder="Email" required /><br />
-      <input
-        type="password"
-        id="password"
-        placeholder="Password"
-        required
-      /><br />
-      <select id="role">
-        <option value="employee">Employee</option>
-        <option value="manager">Manager</option></select
-      ><br />
-      <button type="submit">Sign Up</button>
-    </form>
-
-    <p id="message"></p>
+    <link rel="stylesheet" href="style.css" />
 
     <script type="module">
-      // ✅ Firebase SDK
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
       import {
         getAuth,
         createUserWithEmailAndPassword,
-      } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
       import {
         getFirestore,
         doc,
         setDoc,
-      } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-      // ✅ Your Firebase Config
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
@@ -51,38 +31,45 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      document
-        .getElementById("signupForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
+      async function signup(event) {
+        event.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const role = document.getElementById("role").value;
 
-          const email = document.getElementById("email").value;
-          const password = document.getElementById("password").value;
-          const role = document.getElementById("role").value;
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          const user = userCredential.user;
 
-          try {
-            const userCred = await createUserWithEmailAndPassword(
-              auth,
-              email,
-              password
-            );
-            const user = userCred.user;
+          // Save role in Firestore
+          await setDoc(doc(db, "users", user.uid), { role: role });
 
-            // ✅ Save role in Firestore
-            await setDoc(doc(db, "users", user.uid), {
-              email: user.email,
-              role: role,
-              status: role === "employee" ? "approved" : "pending",
-            });
-
-            document.getElementById("message").innerText =
-              role === "employee"
-                ? "Signup successful! You can log in now."
-                : "Signup successful! Waiting for approval.";
-          } catch (err) {
-            document.getElementById("message").innerText = err.message;
-          }
-        });
+          alert("Account created successfully!");
+          window.location.href = "index.html";
+        } catch (error) {
+          alert(error.message);
+        }
+      }
     </script>
+  </head>
+  <body>
+    <div class="glass-outer">
+      <h1>Sign Up</h1>
+      <form onsubmit="signup(event)">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <label for="role">Role:</label>
+        <select id="role" required>
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+        </select>
+        <button type="submit">Sign Up</button>
+      </form>
+      <p>Already have an account? <a href="login.html">Login here</a></p>
+    </div>
   </body>
 </html>

@@ -5,13 +5,24 @@
     <title>Page 2</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        query,
+        where,
+        onSnapshot,
+        doc,
+        getDoc,
+        updateDoc,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    <script>
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
@@ -22,30 +33,55 @@
         measurementId: "G-NEYY09HB5P",
       };
 
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const container = document.getElementById("file-list");
+      const pageNumber = "2";
 
-      auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-          window.location.href = "login.html";
-          return;
-        }
+      let role = "employee";
 
-        const userDoc = await db.collection("users").doc(user.uid).get();
-        if (!userDoc.exists) {
-          await auth.signOut();
-          window.location.href = "login.html";
-          return;
-        }
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) window.location.href = "login.html";
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        role = userDoc.data()?.role || "employee";
 
-        const data = userDoc.data();
-        if (data.role !== "manager" || data.status !== "approved") {
-          alert("You are not authorized to view this page.");
-          await auth.signOut();
-          window.location.href = "login.html";
-        }
+        const q = query(
+          collection(db, "files"),
+          where("page", "==", pageNumber)
+        );
+        onSnapshot(q, (snapshot) => {
+          container.innerHTML = "";
+          snapshot.docs.forEach((docItem) => {
+            const file = docItem.data();
+            let element = "";
+            if (file.mimetype?.startsWith("image/")) {
+              element = `<img src="${file.url}" alt="${file.name}">`;
+            } else if (file.mimetype === "application/pdf") {
+              element = `<embed src="${file.url}" type="application/pdf">`;
+            } else {
+              element = `<a href="${file.url}" target="_blank">${file.name}</a>`;
+            }
+
+            if (role === "manager") {
+              element += `<div style="margin-top:5px;">
+                      <button onclick="updateStatus('${docItem.id}','approved')">Approve</button>
+                      <button onclick="updateStatus('${docItem.id}','revise')">Revise</button>
+                    </div>`;
+            }
+
+            const div = document.createElement("div");
+            div.innerHTML = element;
+            container.appendChild(div);
+          });
+        });
       });
+
+      window.updateStatus = async (id, status) => {
+        await updateDoc(doc(db, "files", id), { status });
+      };
+
+      window.signOutUser = () => signOut(auth);
     </script>
   </head>
   <body>
@@ -55,46 +91,10 @@
       <a href="page2.html">Page 2</a>
       <a href="page3.html">Page 3</a>
       <a href="page4.html">Page 4</a>
-      <a href="manage-users.html">Manage Users</a>
-      <a href="#" onclick="auth.signOut()">Sign Out</a>
+      <a href="#" onclick="signOutUser()">Sign Out</a>
     </nav>
 
-    <div class="glass-outer">
-      <h1>Page 2: Uploaded Files</h1>
-      <div id="file-list"></div>
-    </div>
-
-    <script>
-      const pageNumber = "2";
-
-      db.collection("files")
-        .where("page", "==", pageNumber)
-        .onSnapshot((snapshot) => {
-          const container = document.getElementById("file-list");
-          container.innerHTML = "";
-          snapshot.docs.forEach((doc) => {
-            const file = doc.data();
-            let element = "";
-            if (file.mimetype?.startsWith("image/")) {
-              element = `<img src="${file.url}" alt="${file.name}">`;
-            } else if (file.mimetype === "application/pdf") {
-              element = `<embed src="${file.url}" type="application/pdf">`;
-            } else {
-              element = `<a href="${file.url}" target="_blank">${file.name}</a>`;
-            }
-            element += `<div style="margin-top:5px;">
-                <button onclick="updateStatus('${doc.id}','approved')">Approve</button>
-                <button onclick="updateStatus('${doc.id}','revise')">Revise</button>
-              </div>`;
-            const div = document.createElement("div");
-            div.innerHTML = element;
-            container.appendChild(div);
-          });
-        });
-
-      function updateStatus(fileId, status) {
-        db.collection("files").doc(fileId).update({ status });
-      }
-    </script>
+    <h1>Page 2: Uploaded Files</h1>
+    <div id="file-list"></div>
   </body>
 </html>

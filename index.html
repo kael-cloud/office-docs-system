@@ -5,76 +5,129 @@
     <title>Home</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        query,
+        where,
+        onSnapshot,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+      import {
+        getStorage,
+        ref,
+        uploadBytes,
+        getDownloadURL,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-    <script>
+      // Firebase config
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
         projectId: "docssystem-53344",
-        storageBucket: "docssystem-53344.appspot.com",
+        storageBucket: "docssystem-53344.firebasestorage.app",
         messagingSenderId: "148150761173",
         appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
         measurementId: "G-NEYY09HB5P",
       };
 
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-      const storage = firebase.storage();
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const storage = getStorage(app);
+
+      // Redirect if not logged in
+      onAuthStateChanged(auth, (user) => {
+        if (!user) window.location.href = "login.html";
+      });
+
+      // Upload form
+      async function uploadFile(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById("fileInput");
+        const pageSelect = document.getElementById("pageSelect");
+        const file = fileInput.files[0];
+        const page = pageSelect.value;
+
+        const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+
+        await addDoc(collection(db, "files"), {
+          name: file.name,
+          url: url,
+          status: "pending",
+          page: page,
+          uploadedBy: auth.currentUser.uid,
+        });
+
+        alert("File uploaded successfully!");
+        fileInput.value = "";
+      }
+
+      // Display pending files for page 1
+      const container = document.getElementById("file-list");
+      const q = query(collection(db, "files"), where("page", "==", "1"));
+      onSnapshot(q, (snapshot) => {
+        container.innerHTML = "";
+        snapshot.docs.forEach((doc) => {
+          const file = doc.data();
+          const div = document.createElement("div");
+          div.innerHTML = `
+          <p>${file.name}</p>
+          <a href="${file.url}" target="_blank">View</a>
+          <button onclick="updateStatus('${doc.id}','approved')">Approve</button>
+          <button onclick="updateStatus('${doc.id}','revise')">Revise</button>
+        `;
+          container.appendChild(div);
+        });
+      });
+
+      window.updateStatus = async (id, status) => {
+        await db.collection("files").doc(id).update({ status });
+      };
+
+      window.uploadFile = uploadFile;
+      window.signOutUser = () => signOut(auth);
     </script>
   </head>
   <body>
     <nav>
       <a href="index.html">Home</a>
-      <a href="page1.html">Process 1</a>
-      <a href="page2.html">Process 2</a>
-      <a href="page3.html">Approved</a>
-      <a href="page4.html">Revisions</a>
-      <a href="#" onclick="auth.signOut()">Sign Out</a>
+      <a href="page1.html">Page 1</a>
+      <a href="page2.html">Page 2</a>
+      <a href="page3.html">Page 3</a>
+      <a href="page4.html">Page 4</a>
+      <a href="#" onclick="signOutUser()">Sign Out</a>
     </nav>
 
-    <h1>Welcome to the Docs System</h1>
-    <form id="uploadForm">
-      <input type="file" id="fileInput" required />
-      <select id="pageSelect" required>
-        <option value="1">Process 1</option>
-        <option value="2">Process 2</option>
-      </select>
-      <button type="submit">Upload</button>
-    </form>
+    <div class="glass-outer">
+      <h1>Welcome to My Website</h1>
+      <p>Upload a file and choose which page it should appear on:</p>
 
-    <script>
-      auth.onAuthStateChanged((user) => {
-        if (!user) window.location.href = "login.html";
-      });
+      <div class="glass-inner">
+        <form id="uploadForm" onsubmit="uploadFile(event)">
+          <input type="file" id="fileInput" required />
+          <label for="page">Select Page:</label>
+          <select id="pageSelect" required>
+            <option value="1">Page 1</option>
+            <option value="2">Page 2</option>
+            <option value="3">Page 3</option>
+            <option value="4">Page 4</option>
+          </select>
+          <button type="submit">Upload</button>
+        </form>
+      </div>
+    </div>
 
-      document
-        .getElementById("uploadForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const file = document.getElementById("fileInput").files[0];
-          const page = document.getElementById("pageSelect").value;
-          const user = auth.currentUser;
-
-          const storageRef = storage.ref(`uploads/${Date.now()}_${file.name}`);
-          const snapshot = await storageRef.put(file);
-          const url = await snapshot.ref.getDownloadURL();
-
-          await db.collection("files").add({
-            name: file.name,
-            url,
-            status: "pending",
-            uploadedBy: user.uid,
-            page,
-          });
-
-          alert("File uploaded!");
-        });
-    </script>
+    <div id="file-list"></div>
   </body>
 </html>
