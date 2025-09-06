@@ -5,14 +5,12 @@
     <title>Login</title>
     <link rel="stylesheet" href="style.css" />
 
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-      import {
-        getAuth,
-        signInWithEmailAndPassword,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
+    <script>
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
@@ -22,27 +20,20 @@
         appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
         measurementId: "G-NEYY09HB5P",
       };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-
-      // Redirect if already logged in
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          window.location.href = "index.html";
-        }
-      });
-
-      async function login(event) {
-        event.preventDefault();
+      async function loginUser(e) {
+        e.preventDefault();
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
         try {
-          await signInWithEmailAndPassword(auth, email, password);
+          await auth.signInWithEmailAndPassword(email, password);
           window.location.href = "index.html";
-        } catch (error) {
-          alert(error.message);
+        } catch (err) {
+          alert(err.message);
         }
       }
     </script>
@@ -50,12 +41,12 @@
   <body>
     <div class="glass-outer">
       <h1>Login</h1>
-      <form onsubmit="login(event)">
+      <form onsubmit="loginUser(event)">
         <input type="email" id="email" placeholder="Email" required />
         <input type="password" id="password" placeholder="Password" required />
         <button type="submit">Login</button>
       </form>
-      <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+      <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
     </div>
   </body>
 </html>

@@ -5,18 +5,12 @@
     <title>Sign Up</title>
     <link rel="stylesheet" href="style.css" />
 
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-      import {
-        getAuth,
-        createUserWithEmailAndPassword,
-      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-      import {
-        getFirestore,
-        doc,
-        setDoc,
-      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
+    <script>
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
@@ -26,32 +20,33 @@
         appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
         measurementId: "G-NEYY09HB5P",
       };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      async function signup(event) {
-        event.preventDefault();
+      async function signUpUser(e) {
+        e.preventDefault();
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
-        const role = document.getElementById("role").value;
+        const roleSelect = document.getElementById("role");
+        let role = roleSelect.value;
+
+        // Force non-managers to be 'employee'
+        if (role !== "manager") role = "employee";
 
         try {
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
+          const cred = await auth.createUserWithEmailAndPassword(
             email,
             password
           );
-          const user = userCredential.user;
-
-          // Save role in Firestore
-          await setDoc(doc(db, "users", user.uid), { role: role });
-
-          alert("Account created successfully!");
+          // Save user role in Firestore
+          await db.collection("users").doc(cred.user.uid).set({
+            email: email,
+            role: role,
+          });
           window.location.href = "index.html";
-        } catch (error) {
-          alert(error.message);
+        } catch (err) {
+          alert(err.message);
         }
       }
     </script>
@@ -59,17 +54,17 @@
   <body>
     <div class="glass-outer">
       <h1>Sign Up</h1>
-      <form onsubmit="signup(event)">
+      <form onsubmit="signUpUser(event)">
         <input type="email" id="email" placeholder="Email" required />
         <input type="password" id="password" placeholder="Password" required />
-        <label for="role">Role:</label>
+        <label for="role">Select Role:</label>
         <select id="role" required>
           <option value="employee">Employee</option>
           <option value="manager">Manager</option>
         </select>
         <button type="submit">Sign Up</button>
       </form>
-      <p>Already have an account? <a href="login.html">Login here</a></p>
+      <p>Already have an account? <a href="login.html">Login</a></p>
     </div>
   </body>
 </html>
