@@ -1,0 +1,178 @@
+/* Import Bodoni font */
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&display=swap");
+
+/* Reset defaults */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Bodoni Moda", serif;
+}
+
+/* Body with background */
+body {
+  background: url("images/background.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  padding-top: 80px; /* space for nav */
+  text-align: center;
+}
+
+/* Navbar - glassmorphism */
+nav {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 15px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Nav links */
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+nav a:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffc107;
+}
+
+/* Headings */
+h1,
+h2 {
+  margin: 40px 0 20px;
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+h2 {
+  font-size: 1.7rem;
+  font-weight: normal;
+  color: #f1f1f1;
+}
+
+/* Upload form (glass effect box) */
+form {
+  margin: 40px auto;
+  padding: 30px;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Inner elements */
+form input,
+form select,
+form button {
+  margin: 10px 0;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
+  outline: none;
+}
+
+form select {
+  color: #000;
+}
+
+form button {
+  background: rgba(0, 123, 255, 0.8);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+form button:hover {
+  background: rgba(0, 86, 179, 0.9);
+}
+
+/* Uploaded file container */
+#file-list {
+  margin: 30px auto;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+/* File previews - ONLY uploaded files get glass effect */
+#file-list img,
+#file-list embed,
+#file-list a {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+  color: #000;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Hover effect for file links */
+#file-list a:hover {
+  background: rgba(0, 123, 255, 0.7);
+  color: #fff;
+}
+
+/* Responsive grid (max 5 columns per row) */
+@media (min-width: 1200px) {
+  #file-list {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+  #file-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+  #file-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  #file-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  #file-list {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Home</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID",
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+
+      // Redirect if not logged in
+      auth.onAuthStateChanged((user) => {
+        if (!user) window.location.href = "login.html";
+      });
+    </script>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="page1.html">Page 1</a>
+      <a href="page2.html">Page 2</a>
+      <a href="page3.html">Page 3</a>
+      <a href="page4.html">Page 4</a>
+      <a href="#" onclick="auth.signOut()">Sign Out</a>
+    </nav>
+
+    <div class="glass-outer">
+      <h1>Welcome to My Website</h1>
+      <p>Upload a file and choose which page it should appear on:</p>
+
+      <div class="glass-inner">
+        <form id="uploadForm">
+          <input type="file" id="fileInput" required />
+          <label for="page">Select Page:</label>
+          <select id="pageSelect" required>
+            <option value="1">Page 1</option>
+            <option value="2">Page 2</option>
+            <option value="3">Page 3</option>
+            <option value="4">Page 4</option>
+          </select>
+          <button type="submit">Upload</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="file-list"></div>
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const file = document.getElementById("fileInput").files[0];
+          const page = document.getElementById("pageSelect").value;
+          const user = auth.currentUser;
+
+          const storageRef = storage.ref(`uploads/${Date.now()}_${file.name}`);
+          const snapshot = await storageRef.put(file);
+          const url = await snapshot.ref.getDownloadURL();
+
+          await db.collection("files").add({
+            name: file.name,
+            url,
+            status: "pending",
+            uploadedBy: user.uid,
+            page,
+          });
+
+          alert("File uploaded successfully!");
+        });
+
+      // Display pending files
+      db.collection("files")
+        .where("page", "==", "1")
+        .onSnapshot((snapshot) => {
+          const container = document.getElementById("file-list");
+          container.innerHTML = "";
+          snapshot.docs.forEach((doc) => {
+            const file = doc.data();
+            const div = document.createElement("div");
+            div.innerHTML = `
+      <p>${file.name}</p>
+      <a href="${file.url}" target="_blank">View</a>
+      <button onclick="updateStatus('${doc.id}','approved')">Approve</button>
+      <button onclick="updateStatus('${doc.id}','revise')">Revise</button>
+    `;
+            container.appendChild(div);
+          });
+        });
+
+      function updateStatus(fileId, status) {
+        db.collection("files").doc(fileId).update({ status });
+      }
+    </script>
+  </body>
+</html>
