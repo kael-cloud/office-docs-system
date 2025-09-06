@@ -2,60 +2,99 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Revision Files</title>
+    <title>Page 4</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"></script>
 
     <script>
       const firebaseConfig = {
         apiKey: "AIzaSyCLxo3xwV9HHLHNBJ3OOwGH9TNUlOcd810",
         authDomain: "docssystem-53344.firebaseapp.com",
         projectId: "docssystem-53344",
-        storageBucket: "docssystem-53344.appspot.com",
+        storageBucket: "docssystem-53344.firebasestorage.app",
         messagingSenderId: "148150761173",
         appId: "1:148150761173:web:6bcb198c8754ec3fbd145c",
         measurementId: "G-NEYY09HB5P",
       };
+
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        if (!userDoc.exists) {
+          await auth.signOut();
+          window.location.href = "login.html";
+          return;
+        }
+
+        const data = userDoc.data();
+        if (data.role !== "manager" || data.status !== "approved") {
+          alert("You are not authorized to view this page.");
+          await auth.signOut();
+          window.location.href = "login.html";
+        }
+      });
     </script>
   </head>
   <body>
     <nav>
       <a href="index.html">Home</a>
-      <a href="page1.html">Process 1</a>
-      <a href="page2.html">Process 2</a>
-      <a href="page3.html">Approved</a>
-      <a href="page4.html">Revisions</a>
+      <a href="page1.html">Page 1</a>
+      <a href="page2.html">Page 2</a>
+      <a href="page3.html">Page 3</a>
+      <a href="page4.html">Page 4</a>
+      <a href="manage-users.html">Manage Users</a>
       <a href="#" onclick="auth.signOut()">Sign Out</a>
     </nav>
 
-    <h1>Files for Revision</h1>
-    <div id="file-list"></div>
+    <div class="glass-outer">
+      <h1>Page 4: Uploaded Files</h1>
+      <div id="file-list"></div>
+    </div>
 
     <script>
-      auth.onAuthStateChanged((user) => {
-        if (!user) return (window.location.href = "login.html");
+      const pageNumber = "4";
 
-        db.collection("files")
-          .where("status", "==", "revise")
-          .onSnapshot((snapshot) => {
-            const container = document.getElementById("file-list");
-            container.innerHTML = "";
-            snapshot.forEach((docSnap) => {
-              const file = docSnap.data();
-              const div = document.createElement("div");
-              div.innerHTML = `<p>${file.name}</p><a href="${file.url}" target="_blank">View</a>`;
-              container.appendChild(div);
-            });
+      db.collection("files")
+        .where("page", "==", pageNumber)
+        .onSnapshot((snapshot) => {
+          const container = document.getElementById("file-list");
+          container.innerHTML = "";
+          snapshot.docs.forEach((doc) => {
+            const file = doc.data();
+            let element = "";
+            if (file.mimetype?.startsWith("image/")) {
+              element = `<img src="${file.url}" alt="${file.name}">`;
+            } else if (file.mimetype === "application/pdf") {
+              element = `<embed src="${file.url}" type="application/pdf">`;
+            } else {
+              element = `<a href="${file.url}" target="_blank">${file.name}</a>`;
+            }
+            element += `<div style="margin-top:5px;">
+                <button onclick="updateStatus('${doc.id}','approved')">Approve</button>
+                <button onclick="updateStatus('${doc.id}','revise')">Revise</button>
+              </div>`;
+            const div = document.createElement("div");
+            div.innerHTML = element;
+            container.appendChild(div);
           });
-      });
+        });
+
+      function updateStatus(fileId, status) {
+        db.collection("files").doc(fileId).update({ status });
+      }
     </script>
   </body>
 </html>
